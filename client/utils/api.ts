@@ -15,6 +15,26 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'Origin, Content-Type',
 };
 
+export async function getLatestCommit() {
+  try {
+    const response = await axios({
+      method: 'get',
+      url: `${apiHost}/api/git`,
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+        ...corsHeaders,
+      },
+    });
+    if (response.status === 200) {
+      return response.data;
+    }
+    return response;
+  } catch (error) {
+    throw error;
+  }
+}
+
 export async function getAllProposals(): Promise<IProposal[] | AxiosResponse> {
   try {
     const response = await axios({

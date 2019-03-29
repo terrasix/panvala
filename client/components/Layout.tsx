@@ -7,7 +7,7 @@ import { AxiosResponse } from 'axios';
 
 import Header from './Header';
 import { IProposal, ISlate, IAppContext } from '../interfaces';
-import { getAllProposals, getAllSlates } from '../utils/api';
+import { getAllProposals, getAllSlates, getLatestCommit } from '../utils/api';
 import { convertEVMSlateStatus } from '../utils/status';
 import { baseToConvertedUnits } from '../utils/format';
 
@@ -57,6 +57,7 @@ export default class Layout extends React.Component<IProps, IAppContext> {
 
   // runs once, onload
   async componentDidMount() {
+    const latestCommit = (await getLatestCommit()).slice(0, 6);
     // const slatesFromIpfs: any[] = await Promise.all(slateMultihashes.map(mh => ipfsGetData(mh)));
     // const slatesWithMHs = slates.map((s, i) => ({ ...s, hash: slateMultihashes[i] }));
     const slates: ISlate[] | AxiosResponse = await getAllSlates();
@@ -104,6 +105,7 @@ export default class Layout extends React.Component<IProps, IAppContext> {
         votingCloseDate: week12EndDate,
         finalityDate: week13EndDate,
       },
+      latestCommit,
     });
   }
 
@@ -173,7 +175,18 @@ export default class Layout extends React.Component<IProps, IAppContext> {
           closeOnClick
           pauseOnHover
         />
+        <LatestCommit>{`commit: ${this.state.latestCommit}`}</LatestCommit>
       </LayoutWrapper>
     );
   }
 }
+
+const LatestCommit = styled.div`
+  position: fixed;
+  border: 1px solid grey;
+  bottom: 0;
+  right: 0;
+  margin: 1em;
+  padding: 0.3em;
+  font-size: 0.8em;
+`;

@@ -84,9 +84,9 @@ export interface ISlateMetadata {
  * Slate data to be saved in the database
  */
 export interface ISaveSlate {
-  slateID: string,
-  metadataHash: string,
-  email?: string,
+  slateID: string;
+  metadataHash: string;
+  email?: string;
 }
 
 export interface IChoices {
@@ -126,6 +126,7 @@ export interface IAppContext {
   onNotify?: any;
   onRefreshProposals?: any;
   onRefreshSlates?: any;
+  latestCommit?: string;
 }
 
 export interface IEthereumContext {

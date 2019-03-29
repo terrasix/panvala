@@ -1,5 +1,6 @@
-const { sequelize } = require('./models');
+const Git = require('nodegit');
 const { checkSchema } = require('express-validator/check');
+const { sequelize } = require('./models');
 
 // Validation
 const { proposalSchema } = require('./utils/proposals');
@@ -59,10 +60,15 @@ module.exports = app => {
   app.post('/api/slates', checkSchema(slateSchema), slate.create);
 
   // BALLOTS
-  app.post(
-    '/api/ballots',
-    ballot.process,
-    checkSchema(ballotInsertSchema),
-    ballot.create
-  );
+  app.post('/api/ballots', ballot.process, checkSchema(ballotInsertSchema), ballot.create);
+
+  app.get('/api/git', (req, res) => {
+    Git.Repository.open('../.git')
+      .then(repo => {
+        return repo.getHeadCommit();
+      })
+      .then(commit => {
+        res.send(commit.sha());
+      });
+  });
 };
