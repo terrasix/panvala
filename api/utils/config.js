@@ -7,7 +7,9 @@ module.exports = {
   contracts: {
     gatekeeperAddress,
     tokenCapacitorAddress,
-    genesisBlockNumber: 1,
+    genesisBlockNumbers: {
+      4: 4555351,
+    },
   },
   rpcEndpoint,
 };

@@ -6,7 +6,7 @@ const {
   contractABIs: { ParameterStore },
 } = require('../../packages/panvala-utils');
 const {
-  contracts: { genesisBlockNumber },
+  contracts: { genesisBlockNumbers },
   rpcEndpoint,
 } = require('../utils/config');
 
@@ -29,9 +29,11 @@ module.exports = {
       },
     ];
 
+    const { chainId } = await provider.getNetwork();
+    const genesisBlockNumber = genesisBlockNumbers[chainId] || 1;
     const ethEvents = EthEvents(contracts, rpcEndpoint, genesisBlockNumber);
 
-    const events = await ethEvents.getAllEvents();
+    const events = await ethEvents.getEvents();
     const parameterInitializedEvents = events.filter(e => e.name === 'ParameterInitialized');
     const params = parameterInitializedEvents.reduce((acc, val) => {
       return {

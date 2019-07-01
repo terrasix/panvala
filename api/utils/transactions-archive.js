@@ -1,48 +1,52 @@
-const { providers, Contract } = require('ethers');
-const range = require('lodash/range');
-const flatten = require('lodash/flatten');
-const {
-  contractABIs: { Gatekeeper, TokenCapacitor },
-} = require('../../packages/panvala-utils');
-
-const {
-  contracts: { gatekeeperAddress, tokenCapacitorAddress, genesisBlockNumber },
-  rpcEndpoint,
-} = require('./config');
+// ----------------------------------------------------------------------------------------
+// NOT IN-USE ATM
+// ----------------------------------------------------------------------------------------
 
 /**
  * Gets all events from genesis block (contract) -> current block
+ * get logs in blocks, transactions -> events
  */
-async function getAllEvents() {
-  const provider = new providers.JsonRpcProvider(rpcEndpoint);
-  // Get an interface to the Gatekeeper contract
-  const gatekeeper = new Contract(gatekeeperAddress, Gatekeeper.abi, provider);
-  const tokenCapacitor = new Contract(tokenCapacitorAddress, TokenCapacitor.abi, provider);
+async function getAllEventss() {
+  try {
+    const { gatekeeper, provider, tokenCapacitor } = getContracts();
 
-  // TEMPORARY WORKAROUND: prevent app from crashing on rinkeby network
-  const network = await provider.getNetwork();
-  if (network.chainId === 4) {
-    return [];
+    // TEMPORARY WORKAROUND: prevent app from crashing on rinkeby network
+    const network = await provider.getNetwork();
+    if (network.chainId === 4) {
+      return [];
+    }
+
+    const currentBlockNumber = await provider.getBlockNumber();
+    console.log('currentBlockNumber:', currentBlockNumber);
+
+    const { chainId } = await provider.getNetwork();
+    if (chainId === 4) {
+      return [];
+    }
+    const genesisBlockNumber = genesisBlockNumbers[chainId] || 1;
+    console.log('genesisBlockNumber:', genesisBlockNumber);
+    const blocksRange = range(genesisBlockNumber, currentBlockNumber + 1);
+
+    const events = await Promise.all(
+      blocksRange.map(async blockNumber => {
+        const block = await provider.getBlock(blockNumber, true);
+        const logsInBlock = await getLogsInBlock(block, provider, gatekeeper, tokenCapacitor);
+        // [[Log, Log]] -> [Log, Log]
+        // [[]] -> []
+        return flatten(logsInBlock);
+      })
+    );
+
+    // [[], [], [Log, Log]] -> [Log, Log]
+    return flatten(events);
+  } catch (error) {
+    console.error('ERROR while getting events', error.message);
+    throw error;
   }
-
-  const currentBlockNumber = await provider.getBlockNumber();
-  console.log('currentBlockNumber:', currentBlockNumber);
-
-  const blocksRange = range(genesisBlockNumber, currentBlockNumber + 1);
-
-  const events = await Promise.all(
-    blocksRange.map(async blockNumber => {
-      const block = await provider.getBlock(blockNumber, true);
-      const logsInBlock = await getLogsInBlock(block, provider, gatekeeper, tokenCapacitor);
-      // [[Log, Log]] -> [Log, Log]
-      // [[]] -> []
-      return flatten(logsInBlock);
-    })
-  );
-
-  // [[], [], [Log, Log]] -> [Log, Log]
-  return flatten(events);
 }
+
+// ----------------------------------------------------------------------------------------
+// get transactions and encoded logs in a single block
 
 /**
  * Gets decoded logs from all transactions in a single block
@@ -63,6 +67,9 @@ async function getLogsInBlock(block, provider, gatekeeper, tokenCapacitor) {
     })
   );
 }
+
+// ----------------------------------------------------------------------------------------
+// decode logs in a single transaction
 
 const extraneousEventNames = [
   'PermissionRequested',
@@ -107,7 +114,3 @@ function decodeLogs(contract, block, tx, logs) {
     })
     .filter(l => l !== null);
 }
-
-module.exports = {
-  getAllEvents,
-};

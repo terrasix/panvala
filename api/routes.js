@@ -13,6 +13,7 @@ const slate = require('./controllers/slate');
 const ballot = require('./controllers/ballot');
 const notification = require('./controllers/notification');
 const parameter = require('./controllers/parameter');
+const event = require('./controllers/event');
 
 // Routes
 module.exports = app => {
@@ -68,4 +69,7 @@ module.exports = app => {
 
   // PARAMETERS
   app.get('/api/parameters', parameter.getAll);
+
+  // EVENTS
+  app.get('/api/events', event.getAll);
 };
