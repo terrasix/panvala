@@ -1,15 +1,8 @@
-const ethers = require('ethers');
+const { utils } = require('ethers');
 const flatten = require('lodash/flatten');
-const ipfs = require('./ipfs');
-const { utils } = ethers;
-
 const {
-  contractABIs: { Gatekeeper, TokenCapacitor },
-} = require('../../packages/panvala-utils');
-
-const config = require('./config');
-const { rpcEndpoint } = config;
-const { gatekeeperAddress, tokenCapacitorAddress } = config.contracts;
+  eth: { gatekeeper, tokenCapacitor },
+} = require('./eth');
 
 const notifications = {
   PROPOSAL_INCLUDED_IN_SLATE: {
@@ -57,18 +50,14 @@ async function getNormalizedNotificationsByEvents(events, address) {
   // this would be useful for saving in the db
   // const eventsByName = groupBy(events, 'name');
 
-  const provider = new ethers.providers.JsonRpcProvider(rpcEndpoint);
-  const gatekeeper = new ethers.Contract(gatekeeperAddress, Gatekeeper.abi, provider);
-  const tokenCapacitor = new ethers.Contract(tokenCapacitorAddress, TokenCapacitor.abi, provider);
-
   // get all events for 'Slate Accepted'
   const slateAcceptedEvents = events.filter(
     e => e.name === 'ConfidenceVoteFinalized' || e.name === 'RunoffFinalized'
   );
-  const slateAcceptedNotifications = flatten(
+  const slateFinalizedNotifications = flatten(
     await Promise.all(
       slateAcceptedEvents.map(async event => {
-        const { winningSlate, ballotID, categoryID } = event.values;
+        const { ballotID, resource, winningSlate } = event.values;
         const slateRequests = await gatekeeper.slateRequests(winningSlate);
         const withdrawGrantNotifications = flatten(
           await Promise.all(
@@ -105,18 +94,22 @@ async function getNormalizedNotificationsByEvents(events, address) {
             },
           ];
         }
-
+        const slateAcceptedNotifications = slate.withdrawn
+          ? [
+              {
+                ...notifications.SLATE_ACCEPTED,
+                event,
+                slateID: utils.bigNumberify(winningSlate).toString(),
+                ballotID,
+                resource,
+                // recommender,
+              },
+            ]
+          : [];
         // TODO: filter against withdrawn stakes
-        return withdrawGrantNotifications.concat(withdrawStakeNotification).concat([
-          {
-            ...notifications.SLATE_ACCEPTED,
-            event,
-            slateID: utils.bigNumberify(winningSlate).toString(),
-            ballotID,
-            categoryID,
-            // recommender,
-          },
-        ]);
+        return withdrawGrantNotifications
+          .concat(withdrawStakeNotification)
+          .concat(slateAcceptedNotifications);
       })
     )
   );
@@ -129,13 +122,10 @@ async function getNormalizedNotificationsByEvents(events, address) {
   );
   const proposalIncludedInSlateNotifications = await Promise.all(
     proposalCreatedEvents.map(async event => {
-      const { proposer, recipient, metadataHash } = event.values;
-      const proposalMetadata = await ipfs.get(utils.toUtf8String(metadataHash), {
-        json: true,
-      });
+      const { proposalID, proposer, recipient, requestID } = event.values;
       return {
         ...notifications.PROPOSAL_INCLUDED_IN_SLATE,
-        proposalID: proposalMetadata.id,
+        proposalID,
         event,
         proposer,
         recipient,
@@ -144,7 +134,7 @@ async function getNormalizedNotificationsByEvents(events, address) {
     })
   );
 
-  return slateAcceptedNotifications.concat(proposalIncludedInSlateNotifications);
+  return slateFinalizedNotifications.concat(proposalIncludedInSlateNotifications);
 }
 
 module.exports = {

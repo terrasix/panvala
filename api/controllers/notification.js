@@ -1,8 +1,6 @@
 const { utils } = require('ethers');
 const { getNormalizedNotificationsByEvents } = require('../utils/notifications');
-const event = require('../controllers/event');
-
-const numRegex = /^([^0-9]*)$/;
+const event = require('./event');
 
 module.exports = {
   /**
@@ -18,7 +16,7 @@ module.exports = {
     }
 
     try {
-      // this uses cached transactions
+      // this uses cached transactions from the events table
       event.getAll().then(events => {
         // get normalize events by address
         getNormalizedNotificationsByEvents(events, address).then(notifications => {

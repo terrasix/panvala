@@ -1,48 +1,34 @@
 const ethers = require('ethers');
-const ipfs = require('./ipfs');
 const range = require('lodash/range');
 const { Promise } = require('bluebird');
-
 const { Slate } = require('../models');
-
-const {
-  contractABIs: { Gatekeeper, ParameterStore },
-} = require('../../packages/panvala-utils');
-
-const { toUtf8String } = ethers.utils;
-
 const config = require('./config');
-const { rpcEndpoint } = config;
-const { gatekeeperAddress, tokenCapacitorAddress } = config.contracts;
-
+const { eth } = require('./eth');
+const ipfs = require('./ipfs');
 const { nonEmptyString } = require('./validation');
 
-const BN = small => ethers.utils.bigNumberify(small);
+const { toUtf8String } = ethers.utils;
+const { tokenCapacitorAddress } = config.contracts;
+
 const getAddress = hexAddress => ethers.utils.getAddress(hexAddress);
 
 /**
  * Read slate info from the blockchain, IPFS, and the local DB
  */
 async function getAllSlates() {
-  // Get an interface to the Gatekeeper contract
-  const provider = new ethers.providers.JsonRpcProvider(rpcEndpoint);
-  const gatekeeper = new ethers.Contract(gatekeeperAddress, Gatekeeper.abi, provider);
-
-  // Get an interface to the ParameterStore contract
-  const parameterStoreAddress = await gatekeeper.functions.parameters();
-  const parameterStore = new ethers.Contract(parameterStoreAddress, ParameterStore.abi, provider);
+  // Get contract interfaces
+  const { gatekeeper, parameterStore, tokenCapacitor } = eth;
   // Get the slate staking requirement
   const requiredStake = await parameterStore.functions.get('slateStakeAmount');
 
   // Get the number of available slates
   const slateCount = await gatekeeper.functions.slateCount();
   console.log(`fetching ${slateCount} slates`);
-  const currentEpoch = await gatekeeper.functions.currentEpochNumber();
-  console.log('currentEpoch:', currentEpoch);
+
   let grantsIncumbent, governanceIncumbent;
   if (gatekeeper.functions.hasOwnProperty('incumbent')) {
-    grantsIncumbent = await gatekeeper.functions.incumbent(tokenCapacitorAddress);
-    governanceIncumbent = await gatekeeper.functions.incumbent(parameterStoreAddress);
+    grantsIncumbent = await gatekeeper.functions.incumbent(tokenCapacitor.address);
+    governanceIncumbent = await gatekeeper.functions.incumbent(parameterStore.address);
   }
 
   // 0..slateCount
@@ -63,7 +49,7 @@ async function getAllSlates() {
         incumbent = true;
       } else if (
         slate.recommender === governanceIncumbent &&
-        slate.resource === parameterStoreAddress
+        slate.resource === parameterStore.address
       ) {
         incumbent = true;
       }

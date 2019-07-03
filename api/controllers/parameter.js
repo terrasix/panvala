@@ -1,43 +1,35 @@
 const ethers = require('ethers');
-const { EthEvents } = require('eth-events');
-
-const { getContracts } = require('../utils/eth');
+const { Event } = require('../models');
+const { eth } = require('../utils/eth');
 const {
   contractABIs: { ParameterStore },
 } = require('../../packages/panvala-utils');
-const {
-  contracts: { genesisBlockNumbers },
-  rpcEndpoint,
-} = require('../utils/config');
 
 module.exports = {
   async getAll(req, res) {
-    const { gatekeeper, provider } = getContracts();
+    const { gatekeeper, provider } = eth;
 
     // get the parameter store associated with the gatekeeper
     const psAddress = await gatekeeper.functions.parameters();
     const parameterStore = new ethers.Contract(psAddress, ParameterStore.abi, provider);
 
-    // get parameters
+    // get directly from contract
     const slateStakeAmount = (await parameterStore.getAsUint('slateStakeAmount')).toString();
 
-    const contracts = [
-      {
-        abi: ParameterStore.abi,
-        address: psAddress,
-        name: 'Parameter Store',
+    // get ParameterInitialized events from db cache
+    const parameterInitializedEvents = await Event.findAll({
+      where: {
+        name: 'ParameterInitialized',
       },
-    ];
+      raw: true,
+    });
 
-    const { chainId } = await provider.getNetwork();
-    const genesisBlockNumber = genesisBlockNumbers[chainId] || 1;
-    const ethEvents = EthEvents(contracts, rpcEndpoint, genesisBlockNumber);
-
-    const events = await ethEvents.getEvents();
-    const parameterInitializedEvents = events.filter(e => e.name === 'ParameterInitialized');
+    // Array -> Object w/ just the keys and values
     const params = parameterInitializedEvents.reduce((acc, val) => {
+      const values = JSON.parse(val.values);
+      // TODO: change to [values.name]
       return {
-        [val.values.key]: val.values.value,
+        [values.key]: values.value,
         ...acc,
       };
     }, {});

@@ -2,6 +2,8 @@ const express = require('express');
 const cors = require('cors');
 const setupRoutes = require('./routes');
 const morgan = require('morgan');
+const { setupBlockTracker } = require('./utils/blockTracker.js');
+const { setupEthEvents } = require('./utils/events.js');
 
 const app = express();
 
@@ -17,6 +19,12 @@ app.use(morgan('common'));
 
 // Routes:
 setupRoutes(app);
+
+// Init eth-events
+setupEthEvents();
+
+// Init block tracker
+setupBlockTracker();
 
 // Start server:
 if (process.env.NODE_ENV !== 'test') {

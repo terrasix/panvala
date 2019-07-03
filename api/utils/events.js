@@ -1,64 +1,63 @@
-const ethers = require('ethers');
 const { EthEvents } = require('eth-events');
 const {
   contractABIs: { Gatekeeper, TokenCapacitor, ParameterStore },
 } = require('../../packages/panvala-utils');
 const {
-  contracts: { gatekeeperAddress, tokenCapacitorAddress, genesisBlockNumbers },
+  contracts: { genesisBlockNumbers },
   rpcEndpoint,
 } = require('./config');
-const { getContracts } = require('../utils/eth');
+const { eth } = require('./eth');
 
-async function getAllEvents(startBlock) {
+let ethEvents;
+
+async function setupEthEvents() {
+  const { gatekeeper, tokenCapacitor, parameterStore } = eth;
+  const { chainId } = await eth.getChainId();
+  // check the genesis block numbers to specify the earliest block to search from
+  const genesisBlockNumber = genesisBlockNumbers[chainId] || 1;
+
+  const contracts = [
+    {
+      abi: Gatekeeper.abi,
+      address: gatekeeper.address,
+      name: 'Gatekeeper',
+    },
+    {
+      abi: TokenCapacitor.abi,
+      address: tokenCapacitor.address,
+      name: 'Token Capacitor',
+    },
+    {
+      abi: ParameterStore.abi,
+      address: parameterStore.address,
+      name: 'Parameter Store',
+    },
+  ];
+
+  const extraneousEventNames = ['VotingTokensDeposited', 'VotingTokensWithdrawn'];
+  ethEvents = EthEvents(contracts, rpcEndpoint, genesisBlockNumber, extraneousEventNames);
+}
+
+async function getEthEvents(fromBlock, toBlock) {
   try {
-    const { provider, gatekeeper } = getContracts();
-    const currentBlockNumber = await provider.getBlockNumber();
+    if (!ethEvents) {
+      await setupEthEvents();
+    }
+    const { chainId } = await eth.getChainId();
+    if (chainId === 4) {
+      return [];
+    }
 
-    const { chainId } = await provider.getNetwork();
-    // check the genesis block numbers to specify the earliest block to search from
-    const genesisBlockNumber = genesisBlockNumbers[chainId] || 1;
-    console.log('startBlock:', startBlock);
-    console.log('genesis blockNumber:', genesisBlockNumber);
-    console.log('current blockNumber:', currentBlockNumber);
-
-    const psAddress = await gatekeeper.parameters();
-
-    const contracts = [
-      {
-        abi: Gatekeeper.abi,
-        address: gatekeeperAddress,
-        name: 'Gatekeeper',
-      },
-      {
-        abi: TokenCapacitor.abi,
-        address: tokenCapacitorAddress,
-        name: 'Token Capacitor',
-      },
-      {
-        abi: ParameterStore.abi,
-        address: psAddress,
-        name: 'Parameter Store',
-      },
-    ];
-
-    const extraneousEventNames = [
-      'PermissionRequested',
-      // 'VotingTokensDeposited',
-      // 'VotingTokensWithdrawn',
-    ];
-    const ethEvents = EthEvents(contracts, rpcEndpoint, genesisBlockNumber, extraneousEventNames);
-
-    // if it doesn't exist, start at genesisBlock
-    const fromBlock = !!startBlock
-      ? ethers.utils.bigNumberify(startBlock).toNumber()
-      : genesisBlockNumber;
-
-    return ethEvents.getEvents(fromBlock);
+    console.log();
+    console.log(`getting eth-events from ${fromBlock} to ${toBlock}`);
+    return ethEvents.getEvents(fromBlock, toBlock);
   } catch (error) {
+    console.log('ERROR while getting eth-events:', error.message);
     throw error;
   }
 }
 
 module.exports = {
-  getAllEvents,
+  setupEthEvents,
+  getEthEvents,
 };
