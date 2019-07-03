@@ -31,23 +31,27 @@ function getContracts() {
 
 class Eth {
   constructor() {
-    this.provider = new ethers.providers.JsonRpcProvider(rpcEndpoint);
-    this.gatekeeper = new ethers.Contract(gatekeeperAddress, Gatekeeper.abi, this.provider);
-    this.tokenCapacitor = new ethers.Contract(
-      tokenCapacitorAddress,
-      TokenCapacitor.abi,
-      this.provider
-    );
-    this.parameterStore = new ethers.Contract(
-      parameterStoreAddress,
-      ParameterStore.abi,
-      this.provider
-    );
+    if (process.env.NODE_ENV !== 'test') {
+      this.provider = new ethers.providers.JsonRpcProvider(rpcEndpoint);
+      this.gatekeeper = new ethers.Contract(gatekeeperAddress, Gatekeeper.abi, this.provider);
+      this.tokenCapacitor = new ethers.Contract(
+        tokenCapacitorAddress,
+        TokenCapacitor.abi,
+        this.provider
+      );
+      this.parameterStore = new ethers.Contract(
+        parameterStoreAddress,
+        ParameterStore.abi,
+        this.provider
+      );
+    }
   }
 
   async getChainId() {
-    const network = await this.provider.getNetwork();
-    return network.chainId;
+    if (process.env.NODE_ENV !== 'test') {
+      const network = await this.provider.getNetwork();
+      return network.chainId;
+    }
   }
 }
 
