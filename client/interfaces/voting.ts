@@ -29,4 +29,5 @@ export interface IBallotDates {
     [key: string]: number;
   };
   epochNumber: number;
+  bts: number;
 }

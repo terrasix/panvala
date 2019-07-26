@@ -10,7 +10,7 @@ import SectionLabel from './SectionLabel';
 import { Separator } from './Separator';
 import { formatPanvalaUnits, splitAddressHumanReadable } from '../utils/format';
 import { convertEVMSlateStatus, statuses, slateSubmissionDeadline } from '../utils/status';
-import { timestamp, tsToDeadline } from '../utils/datetime';
+import { tsToDeadline } from '../utils/datetime';
 import { ISlate, IBallotDates } from '../interfaces';
 import { colors } from '../styles';
 
@@ -55,8 +55,7 @@ const SlateSidebar = ({ slate, requiredStake, currentBallot }: IStakeSidebarProp
 
   // Calculate the extended deadline from now and the start of the commit period,
   // assuming you were to stake right now
-  const now = timestamp();
-  const newDeadline = slateSubmissionDeadline(currentBallot.votingOpenDate, now);
+  const newDeadline = slateSubmissionDeadline(currentBallot.votingOpenDate, currentBallot.bts);
 
   return (
     <>

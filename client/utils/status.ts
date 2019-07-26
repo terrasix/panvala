@@ -42,7 +42,9 @@ export function isPendingVote(status: string) {
   return status === statuses.PENDING_VOTE;
 }
 export function isCurrentBallot(ballot: IBallotDates) {
-  return dateHasPassed(ballot.startDate) && !dateHasPassed(ballot.finalityDate);
+  return (
+    dateHasPassed(ballot.startDate, ballot.bts) && !dateHasPassed(ballot.finalityDate, ballot.bts)
+  );
 }
 // weeks 1 - [5.5]
 export function isSlateSubmittable(ballot: IBallotDates, category: string): boolean {
@@ -53,19 +55,27 @@ export function isSlateSubmittable(ballot: IBallotDates, category: string): bool
 }
 // weeks 1 - 11
 export function isPreVoting(ballot: IBallotDates) {
-  return dateHasPassed(ballot.startDate) && !dateHasPassed(ballot.votingOpenDate);
+  return (
+    dateHasPassed(ballot.startDate, ballot.bts) && !dateHasPassed(ballot.votingOpenDate, ballot.bts)
+  );
 }
 // week 12
 export function isBallotOpen(ballot: IBallotDates) {
-  return !dateHasPassed(ballot.votingCloseDate) && dateHasPassed(ballot.votingOpenDate);
+  return (
+    !dateHasPassed(ballot.votingCloseDate, ballot.bts) &&
+    dateHasPassed(ballot.votingOpenDate, ballot.bts)
+  );
 }
 // week 13
 export function isBallotClosed(ballot: IBallotDates) {
-  return dateHasPassed(ballot.votingCloseDate) && !dateHasPassed(ballot.finalityDate);
+  return (
+    dateHasPassed(ballot.votingCloseDate, ballot.bts) &&
+    !dateHasPassed(ballot.finalityDate, ballot.bts)
+  );
 }
 // week 14
 export function isBallotFinalized(ballot: IBallotDates) {
-  return dateHasPassed(ballot.finalityDate);
+  return dateHasPassed(ballot.finalityDate, ballot.bts);
 }
 
 export function getPrefixAndDeadline(

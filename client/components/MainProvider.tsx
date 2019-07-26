@@ -90,10 +90,12 @@ const MainProvider: React.FC<any> = (props: any) => {
         GRANT: 0,
         GOVERNANCE: 0,
       },
+      bts: 0,
     },
   });
   const {
     contracts: { gatekeeper, tokenCapacitor, parameterStore },
+    ethProvider,
   } = React.useContext(EthereumContext);
 
   // init slates and proposals from api
@@ -125,6 +127,9 @@ const MainProvider: React.FC<any> = (props: any) => {
     )).toNumber();
     currentBallot.epochNumber = epochNumber.toNumber();
 
+    const blockNumber = await ethProvider.getBlockNumber();
+    const block = await ethProvider.getBlock(blockNumber);
+    currentBallot.bts = block.timestamp;
     console.log('currentBallot:', currentBallot);
     return dispatch({ type: 'ballot', currentBallot });
   }
