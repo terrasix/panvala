@@ -19,13 +19,13 @@ app.prepare().then(() => {
   // init express server (frontend)
   const server = express();
 
-  // if (!dev) {
-  //   server.use(function(req, res, goOn) {
-  //     if (!req.secure && req.get('X-Forwarded-Proto') !== 'https') {
-  //       res.redirect('https://' + req.get('Host') + req.url);
-  //     } else goOn();
-  //   });
-  // }
+  if (!dev) {
+    server.use(function(req, res, next) {
+      if (!req.secure && req.get('X-Forwarded-Proto') !== 'https') {
+        res.redirect('https://' + req.get('Host') + req.url);
+      } else next();
+    });
+  }
 
   // redirect root index to /slates
   server.get('/', (req, res) => res.redirect(301, '/slates'));
