@@ -13,7 +13,7 @@ const apiHost = publicRuntimeConfig.apiHost
   : 'http://localhost:5000';
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': `${apiHost}`,
+  'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, POST, PATCH, PUT, DELETE, OPTIONS',
   'Access-Control-Allow-Headers': 'Origin, Content-Type',
 };
