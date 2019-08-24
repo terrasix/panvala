@@ -5,6 +5,9 @@ installed_contracts/
 # build artifacts
 build/
 
+# postgres env
+docker/postgres/postgres.env
+
 # backup files
 *.swp
 

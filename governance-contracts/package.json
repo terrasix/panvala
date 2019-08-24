@@ -8,12 +8,13 @@
     },
     "scripts": {
         "compile": "yarn sol-lint && truffle compile",
-        "coverage": "solidity-coverage",
-        "lint": "eslint",
-        "migrate": "truffle migrate",
-        "migrate:lptc": "truffle exec scripts/launch_partners_token_capacitor.js",
-        "sol-lint": "solhint ./contracts/**/*.sol",
-        "fix": "eslint --fix ./",
+        "coverage": "./node_modules/.bin/solidity-coverage",
+        "ganache-cli": "../tools/run_ganache_cli.sh",
+        "lint": "./node_modules/.bin/eslint",
+        "migrate": "./node_modules/.bin/truffle migrate",
+        "migrate:lptc": "./node_modules/.bin/truffle exec scripts/launch_partners_token_capacitor.js",
+        "sol-lint": "./node_modules/.bin/solhint ./contracts/**/*.sol",
+        "fix": "./node_modules/.bin/eslint --fix ./",
         "test": "yarn lint ./ && truffle test"
     },
     "author": "",
@@ -22,6 +23,7 @@
         "eslint": "5.16.0",
         "eslint-config-airbnb-base": "13.1.0",
         "eslint-plugin-import": "2.17.3",
+        "ganache-cli": "^6.6.0",
         "solhint": "2.1.0",
         "solidity-coverage": "^0.6.0-beta.5",
         "truffle": "5.0.31"
@@ -29,7 +31,7 @@
     "dependencies": {
         "bs58": "4.0.1",
         "ethereumjs-util": "6.1.0",
-        "ethers": "4.0.33",
+        "ethers": "^4.0.33",
         "lodash": "^4.17.15",
         "moment": "^2.24.0",
         "openzeppelin-solidity": "2.1.3",

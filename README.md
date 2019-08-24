@@ -82,7 +82,8 @@ Install dependencies, compile, and deploy the governance contracts to Ganache.
 ```shell
 cd governance-contracts
 yarn install
-truffle migrate --network ganache
+npm run ganache-cli
+npm run migrate
 ```
 You should see output with the contract addresses for the `Gatekeeper` and the `TokenCapacitor`. Save these values for later configuration steps.
 
